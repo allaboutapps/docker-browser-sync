@@ -8,12 +8,26 @@ as drop-in replacement for Browser Sync's CLI.
 
 It has been tested with Docker for Mac and with Docker Machine on OSX.
 
+- [Docker image for browser-sync](#docker-image-for-browser-sync)
+  - [Regarding this fork](#regarding-this-fork)
+  - [How to use this image](#how-to-use-this-image)
+    - [Static sites](#static-sites)
+    - [Dynamic sites](#dynamic-sites)
+      - [Link](#link)
+      - [Custom network](#custom-network)
+    - [Config file](#config-file)
+  - [Docker Compose](#docker-compose)
+  - [Docker Machine in OSX](#docker-machine-in-osx)
+  - [Contact](#contact)
+  - [Maintainers](#maintainers)
+  - [License](#license)
 
-## Table of Contents
+## Regarding this fork
 
-* [How to use this image](#how-to-use-this-image).
-* [Docker Machine in OSX](#docker-machine-in-osx).
-
+This repo forks [ustwo/docker-browser-sync](https://github.com/ustwo/docker-browser-sync) and introduces the following:
+* Upgrade to [`browser-sync@v2.26.14`](https://github.com/BrowserSync/browser-sync/tree/v2.26.14) and [node@v14](https://hub.docker.com/_/node)
+* Moves to [distroless](https://github.com/GoogleContainerTools/distroless) as the final image.
+* Describes a way to setup live-reloading for [swagger-ui](https://hub.docker.com/r/swaggerapi/swagger-ui) (or any other proxies service) when used with docker-compose.
 
 ## How to use this image
 
@@ -32,7 +46,7 @@ docker run -dt \
            -p 3001:3001 \
            -v $(PWD):/source \
            -w /source \
-           ustwo/browser-sync \
+           allaboutapps/browser-sync \
            start --server --files "css/*.css"
 ```
 
@@ -54,7 +68,7 @@ docker run -dt \
            --link myapp \
            -p 3000:3000 \
            -p 3001:3001 \
-           ustwo/browser-sync \
+           allaboutapps/browser-sync \
            start --proxy "myapp:8000" --files "css/*.css"
 ```
 
@@ -83,7 +97,7 @@ docker run -dt \
            --net bs \
            -p 3000:3000 \
            -p 3001:3001 \
-           ustwo/browser-sync \
+           allaboutapps/browser-sync \
            start --proxy "myapp:8000" --files "css/*.css"
 ```
 
@@ -99,7 +113,7 @@ docker run -dt \
            --net bs \
            -p 3000:3000 \
            -p 3001:3001 \
-           ustwo/browser-sync \
+           allaboutapps/browser-sync \
            -v $(PWD)/config.js:/source/config.js \
            start --config config.js
 ```
@@ -108,6 +122,26 @@ docker run -dt \
 ## Docker Compose
 
 Take a look to [docker-compose.yml](./docker-compose.yml) for a simple case.
+
+For example, to proxy swagger-ui via browser-sync and live reload on any locally mounted `swagger.yml` changes:
+
+```yaml
+swaggerui:
+  image: swaggerapi/swagger-ui:v3.28.0
+  environment:
+    SWAGGER_JSON: "/api/swagger.yml"
+  volumes:
+    # mount our local main swagger.yml file (refresh your browser to see changes)
+    - ./api:/api:ro,consistent
+
+swaggerui-browser-sync:
+  image: allaboutapps/browser-sync
+  command: start --proxy 'swaggerui:8080' --port 8081 --files "/api/*.yml"
+  volumes:
+    - ./api:/api:ro,consistent
+  ports:
+    - "8081:8081"
+```
 
 
 ## Docker Machine in OSX
@@ -120,12 +154,12 @@ in this situation you can only use the polling strategy as shown in `sandbox/pol
 
 ## Contact
 
-* open.source@ustwo.com
+* http://github.com/allaboutapps
 
 
 ## Maintainers
 
-* Arnau Siches (@arnau)
+* Mario Ranftl (@majodev)
 
 ## License
 

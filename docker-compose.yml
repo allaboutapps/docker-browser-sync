@@ -1,8 +1,29 @@
-bs:
-  image: ustwo/browser-sync
-  command: start --server --files "*.css"
+  bs:
+    image: allaboutapps/browser-sync
+    command: start --server --files "*.css"
+    volumes:
+      - ./sandbox:/source
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+
+
+---
+
+# Proxy an existing service, e.g. swagger-ui:
+
+swaggerui:
+  image: swaggerapi/swagger-ui:v3.28.0
+  environment:
+    SWAGGER_JSON: "/api/swagger.yml"
   volumes:
-    - ./sandbox:/source
+    # mount our local main swagger.yml file (refresh your browser to see changes)
+    - ./api:/api:ro,consistent
+
+swaggerui-browser-sync:
+  image: allaboutapps/browser-sync
+  command: start --proxy 'swaggerui:8080' --port 8081 --files "/api/*.yml"
+  volumes:
+    - ./api:/api:ro,consistent
   ports:
-    - "3000:3000"
-    - "3001:3001"
+    - "8081:8081"

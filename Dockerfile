@@ -1,8 +1,8 @@
-FROM node:6-slim
-MAINTAINER Arnau Siches <arnau@ustwo.com>
-
-RUN npm -g install browser-sync
-
+FROM node:14-alpine as builder
+RUN npm -g install browser-sync@v2.26.14
 WORKDIR /source
 
-ENTRYPOINT ["browser-sync"]
+FROM gcr.io/distroless/nodejs:14
+COPY --from=builder /usr/local/lib/node_modules/browser-sync /app
+WORKDIR /app/dist
+ENTRYPOINT ["/nodejs/bin/node", "bin.js"]
